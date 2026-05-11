@@ -1,9 +1,19 @@
+import os
 from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DB_PATH = Path(__file__).parent / "xGroceryDB.db"
+# Em dev: backend/xGroceryDB.db (default).
+# Em prod (servidor): definir XGROCERY_DB_PATH para um path persistente
+# fora do diretório de código (ex: /opt/apps/xgrocery/x_db/xGroceryDB.db),
+# protegendo o banco contra git pull / redeploy.
+DB_PATH = Path(
+    os.environ.get(
+        "XGROCERY_DB_PATH",
+        str(Path(__file__).parent / "xGroceryDB.db"),
+    )
+)
 
 engine = create_engine(
     f"sqlite:///{DB_PATH}",

@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .routers import auth, categories, items, settings
 from .seed import init_db
@@ -42,6 +44,18 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/")
-def root():
-    return {"app": "xGrocery", "version": "0.1.0"}
+# Em produção, o build do frontend (xgrocery-client/dist) é servido
+# pelo próprio FastAPI — single process, sem nginx separado.
+# Em dev local (Vite rodando à parte), o diretório dist não existe e a
+# raiz cai no fallback JSON.
+DIST_PATH = Path(__file__).resolve().parent.parent / "xgrocery-client" / "dist"
+
+if DIST_PATH.is_dir():
+    # StaticFiles com html=True serve index.html em "/" e os assets do build.
+    # Como o xGrocery é single-page sem rotas adicionais no client, isso basta.
+    app.mount("/", StaticFiles(directory=DIST_PATH, html=True), name="frontend")
+else:
+
+    @app.get("/")
+    def root():
+        return {"app": "xGrocery", "version": "0.1.0", "mode": "api-only"}
