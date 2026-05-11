@@ -244,7 +244,7 @@ export function ShoppingList({ user, onLogout }: Props) {
   if (loading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
+        className="min-h-dvh flex items-center justify-center"
         style={{
           backgroundColor: palette.background,
           color: palette.textSecondary,
@@ -257,7 +257,7 @@ export function ShoppingList({ user, onLogout }: Props) {
 
   return (
     <div
-      className="min-h-screen pb-12"
+      className="min-h-dvh pb-12"
       style={{ backgroundColor: palette.background }}
     >
       <SearchBar

@@ -26,7 +26,7 @@ export function LoginScreen({ onLogin }: Props) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-10"
+      className="min-h-dvh flex flex-col items-center justify-center px-6 py-10"
       style={{ backgroundColor: "#0a0a0a", color: "#e8e8e8" }}
     >
       <div className="w-full max-w-sm">

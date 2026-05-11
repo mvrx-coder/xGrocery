@@ -8,8 +8,17 @@
   #root {
     height: 100%;
   }
+  html {
+    /* Trava qualquer overflow horizontal acidental. */
+    overflow-x: hidden;
+  }
   body {
     @apply font-sans antialiased;
+    overflow-x: hidden;
+    /* Mata o rubber-band horizontal (iOS Safari 16+, Chrome, Firefox). */
+    overscroll-behavior-x: none;
+    /* Só permite pan vertical + pinch-zoom. Bloqueia pan horizontal. */
+    touch-action: pan-y pinch-zoom;
   }
   * {
     -webkit-tap-highlight-color: transparent;
