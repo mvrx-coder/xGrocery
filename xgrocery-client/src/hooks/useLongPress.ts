@@ -7,6 +7,11 @@ type LongPressOptions = {
   enabled?: boolean;
 };
 
+// Distância em pixels que distingue "tap" de "scroll/drag".
+// Acima desse delta, a interação é tratada como gesto de rolagem e o click
+// não dispara, mesmo que o touchend ocorra em cima do card.
+const MOVE_THRESHOLD_PX = 10;
+
 export function useLongPress({
   onLongPress,
   onClick,
@@ -15,11 +20,13 @@ export function useLongPress({
 }: LongPressOptions) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
+  const moved = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
 
   const start = useCallback(
     (e: React.TouchEvent | React.MouseEvent) => {
       isLongPress.current = false;
+      moved.current = false;
 
       const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
       const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
@@ -34,7 +41,7 @@ export function useLongPress({
   );
 
   const move = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    if (!timerRef.current) return;
+    if (moved.current) return;
 
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
@@ -42,7 +49,8 @@ export function useLongPress({
     const deltaX = Math.abs(clientX - startPos.current.x);
     const deltaY = Math.abs(clientY - startPos.current.y);
 
-    if (deltaX > 10 || deltaY > 10) {
+    if (deltaX > MOVE_THRESHOLD_PX || deltaY > MOVE_THRESHOLD_PX) {
+      moved.current = true;
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
@@ -57,7 +65,9 @@ export function useLongPress({
         timerRef.current = null;
       }
 
-      if (!isLongPress.current && onClick) {
+      // Só dispara click se NÃO foi long press E o usuário NÃO arrastou.
+      // Sem checar `moved`, qualquer toque para rolar a lista vira toggle.
+      if (!isLongPress.current && !moved.current && onClick) {
         onClick();
       }
 
@@ -73,6 +83,10 @@ export function useLongPress({
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    // touchcancel é disparado pelo iOS quando o navegador "rouba" o gesto
+    // para fazer scroll. Marcar moved=true garante que o end subsequente
+    // (se vier) não dispare click. Também cobre mouseleave em desktop.
+    moved.current = true;
   }, []);
 
   return {
@@ -83,5 +97,6 @@ export function useLongPress({
     onTouchStart: start,
     onTouchEnd: end,
     onTouchMove: move,
+    onTouchCancel: cancel,
   };
 }
