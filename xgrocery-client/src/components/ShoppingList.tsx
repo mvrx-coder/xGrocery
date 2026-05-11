@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ArrowDownAZ } from "lucide-react";
 import { api } from "../api";
@@ -135,22 +135,17 @@ export function ShoppingList({ user, onLogout }: Props) {
     return Object.keys(inactiveByLetter).sort();
   }, [inactiveByLetter]);
 
-  const scrollToLetter = useCallback(
-    (letter: string) => {
-      if (!availableLetters.has(letter)) return;
-      const el = document.getElementById(`alpha-${letter}`);
-      if (!el) return;
-      // Calcula offset manualmente em vez de scrollIntoView smooth: este
-      // ultimo ficou inconsistente em iOS Safari (so disparava no primeiro
-      // tap, ignorava os seguintes). window.scrollTo + getBoundingClientRect
-      // funciona de forma confiavel toda vez.
-      const HEADER_OFFSET = 80; // compensa SearchBar sticky
-      const targetTop =
-        el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
-      window.scrollTo({ top: targetTop, behavior: "smooth" });
-    },
-    [availableLetters],
-  );
+  // Ref para evitar recriar o scrollToLetter a cada polling (15s) — o que
+  // causava re-render de toda a sidebar e fazia o segundo tap nao registrar
+  // porque o handler velho ja tinha sido descartado.
+  const availableLettersRef = useRef(availableLetters);
+  availableLettersRef.current = availableLetters;
+
+  const scrollToLetter = useCallback((letter: string) => {
+    if (!availableLettersRef.current.has(letter)) return;
+    const el = document.getElementById(`alpha-${letter}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const activeCount = filteredItems.filter((it) => it.ativo).length;
 
