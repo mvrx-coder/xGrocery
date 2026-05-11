@@ -11,6 +11,10 @@
   html {
     /* Trava qualquer overflow horizontal acidental. */
     overflow-x: hidden;
+    /* Smooth scroll para anchor links (sidebar alfabetica). Suportado em
+       todo browser moderno. iOS Safari tem bug conhecido com smooth scroll
+       em JS via scrollIntoView, mas via CSS + anchor link funciona bem. */
+    scroll-behavior: smooth;
   }
   body {
     @apply font-sans antialiased;

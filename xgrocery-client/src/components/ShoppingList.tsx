@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ArrowDownAZ } from "lucide-react";
 import { api } from "../api";
@@ -21,42 +21,6 @@ import { QuantityDrawer } from "./QuantityDrawer";
 const ACCENT = "#39ff14";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
-// Compensação vertical para o SearchBar sticky no topo (px).
-const HEADER_OFFSET = 80;
-
-// Smooth scroll feito a mão com requestAnimationFrame. Necessário porque
-// scrollIntoView({behavior:"smooth"}) e window.scrollTo({behavior:"smooth"})
-// têm o bug 239063 do WebKit (iOS Safari) — só dispara na primeira chamada,
-// as subsequentes são silenciosamente ignoradas. Esta versão funciona em
-// qualquer browser de forma confiável.
-let activeScrollAnimationId: number | null = null;
-
-function smoothScrollWindowTo(targetY: number, duration = 300) {
-  if (activeScrollAnimationId !== null) {
-    cancelAnimationFrame(activeScrollAnimationId);
-    activeScrollAnimationId = null;
-  }
-  const startY = window.scrollY;
-  const distance = targetY - startY;
-  if (Math.abs(distance) < 1) return;
-  const startTime = performance.now();
-
-  function step(now: number) {
-    const elapsed = now - startTime;
-    const t = Math.min(elapsed / duration, 1);
-    // easeOutCubic — desaceleração natural no final.
-    const eased = 1 - Math.pow(1 - t, 3);
-    window.scrollTo(0, startY + distance * eased);
-    if (t < 1) {
-      activeScrollAnimationId = requestAnimationFrame(step);
-    } else {
-      activeScrollAnimationId = null;
-    }
-  }
-
-  activeScrollAnimationId = requestAnimationFrame(step);
-}
 
 type ItemDrawerMode =
   | { kind: "create"; prefillName?: string }
@@ -170,23 +134,6 @@ export function ShoppingList({ user, onLogout }: Props) {
     if (!inactiveByLetter) return [];
     return Object.keys(inactiveByLetter).sort();
   }, [inactiveByLetter]);
-
-  // Ref para evitar recriar o scrollToLetter a cada polling (15s) — o que
-  // causava re-render de toda a sidebar e fazia o segundo tap nao registrar
-  // porque o handler velho ja tinha sido descartado.
-  const availableLettersRef = useRef(availableLetters);
-  availableLettersRef.current = availableLetters;
-
-  const scrollToLetter = useCallback((letter: string) => {
-    if (!availableLettersRef.current.has(letter)) return;
-    const el = document.getElementById(`alpha-${letter}`);
-    if (!el) return;
-    const targetY = Math.max(
-      0,
-      el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET,
-    );
-    smoothScrollWindowTo(targetY);
-  }, []);
 
   const activeCount = filteredItems.filter((it) => it.ativo).length;
 
@@ -585,30 +532,42 @@ export function ShoppingList({ user, onLogout }: Props) {
             borderColor: `${palette.surfaceAlt}80`,
             backdropFilter: "blur(6px)",
             WebkitBackdropFilter: "blur(6px)",
-            // touch-action manipulation garante que cada tap dispare onClick
-            // mesmo apos uma scroll animation anterior (sem isso, em iOS o
-            // segundo tap as vezes era absorvido pelo gesto inacabado).
-            touchAction: "manipulation",
           }}
         >
           {ALPHABET.map((letter) => {
             const has = availableLetters.has(letter);
+            const baseClass =
+              "w-10 h-7 flex items-center justify-center text-[13px] font-bold leading-none no-underline";
+            // Letras sem itens viram <span> nao-interativo. Letras com itens
+            // viram <a href="#alpha-X"> que o browser resolve nativamente —
+            // sem JS scroll handler para dar bug. CSS html{scroll-behavior:smooth}
+            // garante animacao. Padrao usado em GitHub TOC, MDN, Smashing
+            // Magazine etc.
+            if (!has) {
+              return (
+                <span
+                  key={letter}
+                  className={baseClass}
+                  style={{
+                    color: palette.textSecondary,
+                    opacity: 0.3,
+                  }}
+                  aria-disabled="true"
+                >
+                  {letter}
+                </span>
+              );
+            }
             return (
-              <button
+              <a
                 key={letter}
-                type="button"
-                onClick={() => scrollToLetter(letter)}
-                disabled={!has}
-                className="w-10 h-7 flex items-center justify-center text-[13px] font-bold leading-none"
-                style={{
-                  color: has ? ACCENT : palette.textSecondary,
-                  opacity: has ? 1 : 0.3,
-                  touchAction: "manipulation",
-                }}
+                href={`#alpha-${letter}`}
+                className={baseClass}
+                style={{ color: ACCENT }}
                 aria-label={`Ir para letra ${letter}`}
               >
                 {letter}
-              </button>
+              </a>
             );
           })}
         </nav>
