@@ -13,7 +13,7 @@ App web mobile-first para a família manter uma única lista de compras comparti
 
 ```
 x_grocery/
-├── backend/             # FastAPI (porta 8061)
+├── backend/             # FastAPI (porta 8062)
 │   ├── main.py
 │   ├── db.py
 │   ├── models.py
@@ -25,7 +25,7 @@ x_grocery/
 │       ├── items.py
 │       ├── categories.py
 │       └── settings.py
-├── xgrocery-client/     # React (porta 5177)
+├── xgrocery-client/     # React (porta 5178)
 └── start-xgrocery.bat   # sobe backend + frontend
 ```
 
@@ -47,7 +47,7 @@ Duplo-clique em `start-xgrocery.bat` ou em terminais separados:
 
 ```bash
 # terminal 1 (raiz x_grocery/)
-python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8061
+python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8062
 
 # terminal 2
 cd xgrocery-client && npm run dev
@@ -55,9 +55,9 @@ cd xgrocery-client && npm run dev
 
 Acesse:
 
-- Frontend: http://localhost:5177
-- Backend: http://localhost:8061
-- Outros dispositivos da rede: `http://<IP-da-máquina>:5177`
+- Frontend: http://localhost:5178
+- Backend: http://localhost:8062
+- Outros dispositivos da rede: `http://<IP-da-máquina>:5178`
 
 ## Usuários (seed automático no primeiro start)
 

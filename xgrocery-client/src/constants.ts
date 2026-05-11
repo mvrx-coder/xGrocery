@@ -1,8 +1,8 @@
-// Em dev (vite na 5177, backend na 8061) → URL absoluta na rede local.
+// Em dev (vite na 5178, backend na 8062) → URL absoluta na rede local.
 // Em prod (build atrás de reverse proxy / Cloudflare Tunnel) → relativo,
 // usando o mesmo hostname da página (sem CORS, mesma origem).
 export const API_URL = import.meta.env.DEV
-  ? `http://${window.location.hostname}:8061`
+  ? `http://${window.location.hostname}:8062`
   : "";
 
 export const FAMILY_NAMES = ["Marcus Vinícius", "Marilane", "Aline", "Lívia"];
