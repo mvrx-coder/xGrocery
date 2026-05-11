@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import { ArrowDownAZ } from "lucide-react";
 import { api } from "../api";
 import { removeAccents } from "../constants";
 import type { ApproachKey, Category, Item, PaletteKey, User } from "../types";
@@ -18,6 +19,8 @@ import { QuantityDrawer } from "./QuantityDrawer";
 // Mantém botões/foco com identidade consistente independente da ordem das
 // categorias no banco.
 const ACCENT = "#39ff14";
+
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 type ItemDrawerMode =
   | { kind: "create"; prefillName?: string }
@@ -53,6 +56,7 @@ export function ShoppingList({ user, onLogout }: Props) {
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [itemDrawer, setItemDrawer] = useState<ItemDrawerMode>(null);
   const [quantityItem, setQuantityItem] = useState<Item | null>(null);
+  const [alphaMode, setAlphaMode] = useState(false);
 
   const currentPalette: PaletteKey = settings?.paleta ?? "nocturne";
   const currentApproach: ApproachKey =
@@ -106,6 +110,39 @@ export function ShoppingList({ user, onLogout }: Props) {
       .filter((it) => !it.ativo)
       .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   }, [filteredItems]);
+
+  // Agrupa inativos pela primeira letra (sem acentos) quando o modo
+  // alfabético está ligado. Letras sem itens não viram grupo; ficam apenas
+  // desabilitadas na sidebar.
+  const inactiveByLetter = useMemo(() => {
+    if (!alphaMode) return null;
+    const groups: Record<string, Item[]> = {};
+    for (const item of inactiveItems) {
+      const first = removeAccents(item.nome).charAt(0).toUpperCase();
+      const letter = /[A-Z]/.test(first) ? first : "#";
+      (groups[letter] ||= []).push(item);
+    }
+    return groups;
+  }, [alphaMode, inactiveItems]);
+
+  const availableLetters = useMemo(() => {
+    if (!inactiveByLetter) return new Set<string>();
+    return new Set(Object.keys(inactiveByLetter));
+  }, [inactiveByLetter]);
+
+  const orderedLetterGroups = useMemo(() => {
+    if (!inactiveByLetter) return [];
+    return Object.keys(inactiveByLetter).sort();
+  }, [inactiveByLetter]);
+
+  const scrollToLetter = useCallback(
+    (letter: string) => {
+      if (!availableLetters.has(letter)) return;
+      const el = document.getElementById(`alpha-${letter}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+    [availableLetters],
+  );
 
   const activeCount = filteredItems.filter((it) => it.ativo).length;
 
@@ -278,17 +315,35 @@ export function ShoppingList({ user, onLogout }: Props) {
 
       <div className="max-w-2xl mx-auto px-4">
         <div
-          className="py-2 flex items-center justify-between"
+          className="py-2 flex items-center justify-between gap-2"
           style={{ backgroundColor: palette.background }}
         >
-          <span className="text-sm" style={{ color: palette.textSecondary }}>
+          <span
+            className="text-sm truncate"
+            style={{ color: palette.textSecondary }}
+          >
             {activeCount} de {filteredItems.length} itens ativos
           </span>
-          {error && (
-            <span className="text-xs" style={{ color: "#ff6b6b" }}>
-              {error}
-            </span>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {error && (
+              <span className="text-xs" style={{ color: "#ff6b6b" }}>
+                {error}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setAlphaMode((v) => !v)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+              style={{
+                backgroundColor: alphaMode ? `${ACCENT}25` : "transparent",
+                color: alphaMode ? ACCENT : palette.textSecondary,
+              }}
+              aria-label="Alternar ordem alfabética com índice lateral"
+              aria-pressed={alphaMode}
+            >
+              <ArrowDownAZ size={18} />
+            </button>
+          </div>
         </div>
 
         {activeItemsOrdered.length > 0 && (
@@ -344,24 +399,56 @@ export function ShoppingList({ user, onLogout }: Props) {
                 {inactiveItems.length}
               </span>
             </div>
-            <AnimatePresence mode="popLayout">
-              {inactiveItems.map((item) => {
-                const category = categoryById[item.categoria_id];
-                if (!category) return null;
-                return (
-                  <ItemCard
-                    key={item.id}
-                    item={item}
-                    category={category}
-                    palette={palette}
-                    approach={currentApproach}
-                    onToggle={handleToggle}
-                    onContextMenu={handleContextMenu}
-                    onLongPressActive={handleLongPressActive}
-                  />
-                );
-              })}
-            </AnimatePresence>
+
+            {alphaMode && inactiveByLetter ? (
+              orderedLetterGroups.map((letter) => (
+                <div key={letter}>
+                  <div id={`alpha-${letter}`} className="py-1 scroll-mt-20">
+                    <span
+                      className="text-xs font-bold uppercase tracking-wider"
+                      style={{ color: ACCENT }}
+                    >
+                      {letter}
+                    </span>
+                  </div>
+                  {inactiveByLetter[letter].map((item) => {
+                    const category = categoryById[item.categoria_id];
+                    if (!category) return null;
+                    return (
+                      <ItemCard
+                        key={item.id}
+                        item={item}
+                        category={category}
+                        palette={palette}
+                        approach={currentApproach}
+                        onToggle={handleToggle}
+                        onContextMenu={handleContextMenu}
+                        onLongPressActive={handleLongPressActive}
+                      />
+                    );
+                  })}
+                </div>
+              ))
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {inactiveItems.map((item) => {
+                  const category = categoryById[item.categoria_id];
+                  if (!category) return null;
+                  return (
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      category={category}
+                      palette={palette}
+                      approach={currentApproach}
+                      onToggle={handleToggle}
+                      onContextMenu={handleContextMenu}
+                      onLongPressActive={handleLongPressActive}
+                    />
+                  );
+                })}
+              </AnimatePresence>
+            )}
           </section>
         )}
 
@@ -439,6 +526,41 @@ export function ShoppingList({ user, onLogout }: Props) {
           onSave={handleQuantitySave}
         />
       </div>
+
+      {/* Sidebar alfabética — fixed à borda direita da viewport, só aparece
+          quando alphaMode está ligado e há itens inativos. Letras sem itens
+          ficam visíveis mas com opacidade reduzida e não respondem ao tap. */}
+      {alphaMode && inactiveItems.length > 0 && (
+        <nav
+          aria-label="Índice alfabético"
+          className="fixed right-0.5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center select-none py-1 rounded-lg"
+          style={{
+            backgroundColor: `${palette.background}cc`,
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+          }}
+        >
+          {ALPHABET.map((letter) => {
+            const has = availableLetters.has(letter);
+            return (
+              <button
+                key={letter}
+                type="button"
+                onClick={() => scrollToLetter(letter)}
+                disabled={!has}
+                className="w-5 h-5 flex items-center justify-center text-[10px] font-bold leading-none"
+                style={{
+                  color: has ? ACCENT : palette.textSecondary,
+                  opacity: has ? 1 : 0.25,
+                }}
+                aria-label={`Ir para letra ${letter}`}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }
