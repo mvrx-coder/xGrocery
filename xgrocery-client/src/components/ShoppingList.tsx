@@ -14,7 +14,10 @@ import { CategoryDrawer, type CategoryFormData } from "./CategoryDrawer";
 import { ItemDrawer, type ItemFormData } from "./ItemDrawer";
 import { QuantityDrawer } from "./QuantityDrawer";
 
-const DEFAULT_ACCENT = "#39ff14";
+// Accent fixo da marca xGrocery — verde da paleta Nocturne (food).
+// Mantém botões/foco com identidade consistente independente da ordem das
+// categorias no banco.
+const ACCENT = "#39ff14";
 
 type ItemDrawerMode =
   | { kind: "create"; prefillName?: string }
@@ -56,7 +59,7 @@ export function ShoppingList({ user, onLogout }: Props) {
     settings?.estilo_diferenciacao ?? "elevated";
   const palette = palettes[currentPalette];
 
-  const accentColor = categories[0]?.cor ?? DEFAULT_ACCENT;
+  const accentColor = ACCENT;
 
   const categoryById = useMemo(() => {
     const map: Record<number, Category> = {};

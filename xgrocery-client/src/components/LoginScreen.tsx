@@ -5,6 +5,8 @@ interface Props {
   onLogin: (name: string, password: string) => Promise<void>;
 }
 
+const ACCENT = "#39ff14";
+
 export function LoginScreen({ onLogin }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [password, setPassword] = useState("");
@@ -27,12 +29,24 @@ export function LoginScreen({ onLogin }: Props) {
   return (
     <div
       className="min-h-dvh flex flex-col items-center justify-center px-6 py-10"
-      style={{ backgroundColor: "#0a0a0a", color: "#e8e8e8" }}
+      style={{
+        color: "#e8e8e8",
+        backgroundColor: "#0a0a0a",
+        backgroundImage:
+          "radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a0a 60%)",
+        backgroundAttachment: "fixed",
+      }}
     >
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-5xl mb-2">🛒</div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 via-amber-400 to-lime-400 bg-clip-text text-transparent">
+          <h1
+            className="text-3xl font-bold bg-clip-text text-transparent"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, #39ff14, #66bb6a, #a8e063)",
+            }}
+          >
             Lista de Compras
           </h1>
           <p className="text-slate-400 text-sm mt-2">Quem está aí?</p>
@@ -73,7 +87,16 @@ export function LoginScreen({ onLogin }: Props) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
+          style={{ caretColor: ACCENT }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = ACCENT;
+            e.currentTarget.style.boxShadow = `0 0 0 2px ${ACCENT}40`;
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#334155";
+            e.currentTarget.style.boxShadow = "none";
+          }}
         />
 
         {error && (
@@ -83,7 +106,12 @@ export function LoginScreen({ onLogin }: Props) {
         <button
           onClick={submit}
           disabled={!selected || !password || submitting}
-          className="mt-4 w-full bg-orange-500 hover:bg-orange-400 disabled:bg-slate-800 disabled:text-slate-500 transition-colors font-semibold rounded-xl py-3 text-slate-950"
+          className="mt-4 w-full disabled:bg-slate-800 disabled:text-slate-500 transition-colors font-semibold rounded-xl py-3"
+          style={{
+            backgroundColor:
+              !selected || !password || submitting ? undefined : ACCENT,
+            color: !selected || !password || submitting ? undefined : "#0a0a0a",
+          }}
         >
           {submitting ? "Entrando..." : "Entrar"}
         </button>

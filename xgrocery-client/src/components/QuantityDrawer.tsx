@@ -91,10 +91,10 @@ export function QuantityDrawer({
               </button>
             </div>
 
-            <div className="px-5 py-6 space-y-5">
+            <div className="px-4 py-5 space-y-4">
               <div>
                 <p
-                  className="text-lg font-semibold leading-snug"
+                  className="text-base font-semibold leading-snug"
                   style={{ color: palette.textPrimary }}
                 >
                   {firstName(userName)}, você quer quantos desse?
@@ -118,7 +118,7 @@ export function QuantityDrawer({
                   if (e.key === "Enter") handleSave();
                 }}
                 placeholder="Ex: 6"
-                className="w-full text-center text-4xl font-bold py-4 rounded-2xl outline-none tabular-nums"
+                className="w-full text-center text-2xl font-bold py-3 rounded-xl outline-none tabular-nums"
                 style={{
                   backgroundColor: palette.surfaceAlt,
                   color: accentColor,
@@ -130,13 +130,13 @@ export function QuantityDrawer({
                 className="text-xs text-center"
                 style={{ color: palette.textSecondary }}
               >
-                Deixe em branco ou 1 para não exibir o contador.
+                Em branco ou 1 = sem contador.
               </p>
 
               <div className="flex gap-2">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 rounded-xl"
+                  className="flex-1 py-2.5 rounded-xl text-sm"
                   style={{
                     backgroundColor: palette.surfaceAlt,
                     color: palette.textPrimary,
@@ -147,7 +147,7 @@ export function QuantityDrawer({
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSave}
-                  className="flex-1 py-3 rounded-xl font-semibold"
+                  className="flex-1 py-2.5 rounded-xl font-semibold text-sm"
                   style={{ backgroundColor: accentColor, color: "#0a0a0a" }}
                 >
                   Salvar
