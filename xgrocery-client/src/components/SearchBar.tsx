@@ -61,9 +61,9 @@ export function SearchBar({
       className="sticky top-0 z-20"
       style={{ backgroundColor: palette.background }}
     >
-      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2 relative">
+      <div className="max-w-2xl mx-auto px-3 py-3 flex items-center gap-1.5 relative">
         <div
-          className="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl"
+          className="flex-1 min-w-0 flex items-center gap-2 px-4 py-3 rounded-xl"
           style={{ backgroundColor: palette.surface }}
         >
           <Search size={20} style={{ color: palette.textSecondary }} />
@@ -90,7 +90,7 @@ export function SearchBar({
 
         <motion.button
           whileTap={{ scale: 0.95 }}
-          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: accentColor }}
           {...addButtonHandlers}
         >
@@ -131,7 +131,7 @@ export function SearchBar({
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onOpenSettings}
-          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: palette.surface }}
           aria-label="Configurações"
         >

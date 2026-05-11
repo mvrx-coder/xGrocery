@@ -139,7 +139,15 @@ export function ShoppingList({ user, onLogout }: Props) {
     (letter: string) => {
       if (!availableLetters.has(letter)) return;
       const el = document.getElementById(`alpha-${letter}`);
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!el) return;
+      // Calcula offset manualmente em vez de scrollIntoView smooth: este
+      // ultimo ficou inconsistente em iOS Safari (so disparava no primeiro
+      // tap, ignorava os seguintes). window.scrollTo + getBoundingClientRect
+      // funciona de forma confiavel toda vez.
+      const HEADER_OFFSET = 80; // compensa SearchBar sticky
+      const targetTop =
+        el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+      window.scrollTo({ top: targetTop, behavior: "smooth" });
     },
     [availableLetters],
   );
@@ -314,7 +322,7 @@ export function ShoppingList({ user, onLogout }: Props) {
       />
 
       <div
-        className={`max-w-2xl mx-auto pl-4 transition-[padding] ${alphaMode ? "pr-10" : "pr-4"}`}
+        className={`max-w-2xl mx-auto pl-4 transition-[padding] ${alphaMode ? "pr-14" : "pr-4"}`}
       >
         <div
           className="py-2 flex items-center justify-between gap-2"
@@ -535,12 +543,16 @@ export function ShoppingList({ user, onLogout }: Props) {
       {alphaMode && inactiveItems.length > 0 && (
         <nav
           aria-label="Índice alfabético"
-          className="fixed right-1 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center select-none py-1.5 px-0.5 rounded-xl border"
+          className="fixed right-1 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center select-none py-1.5 px-1 rounded-xl border"
           style={{
             backgroundColor: `${palette.background}f0`,
             borderColor: `${palette.surfaceAlt}80`,
             backdropFilter: "blur(6px)",
             WebkitBackdropFilter: "blur(6px)",
+            // touch-action manipulation garante que cada tap dispare onClick
+            // mesmo apos uma scroll animation anterior (sem isso, em iOS o
+            // segundo tap as vezes era absorvido pelo gesto inacabado).
+            touchAction: "manipulation",
           }}
         >
           {ALPHABET.map((letter) => {
@@ -551,10 +563,11 @@ export function ShoppingList({ user, onLogout }: Props) {
                 type="button"
                 onClick={() => scrollToLetter(letter)}
                 disabled={!has}
-                className="w-7 h-7 flex items-center justify-center text-[11px] font-bold leading-none"
+                className="w-10 h-7 flex items-center justify-center text-[13px] font-bold leading-none"
                 style={{
                   color: has ? ACCENT : palette.textSecondary,
                   opacity: has ? 1 : 0.3,
+                  touchAction: "manipulation",
                 }}
                 aria-label={`Ir para letra ${letter}`}
               >
