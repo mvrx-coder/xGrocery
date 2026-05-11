@@ -22,6 +22,42 @@ const ACCENT = "#39ff14";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+// Compensação vertical para o SearchBar sticky no topo (px).
+const HEADER_OFFSET = 80;
+
+// Smooth scroll feito a mão com requestAnimationFrame. Necessário porque
+// scrollIntoView({behavior:"smooth"}) e window.scrollTo({behavior:"smooth"})
+// têm o bug 239063 do WebKit (iOS Safari) — só dispara na primeira chamada,
+// as subsequentes são silenciosamente ignoradas. Esta versão funciona em
+// qualquer browser de forma confiável.
+let activeScrollAnimationId: number | null = null;
+
+function smoothScrollWindowTo(targetY: number, duration = 300) {
+  if (activeScrollAnimationId !== null) {
+    cancelAnimationFrame(activeScrollAnimationId);
+    activeScrollAnimationId = null;
+  }
+  const startY = window.scrollY;
+  const distance = targetY - startY;
+  if (Math.abs(distance) < 1) return;
+  const startTime = performance.now();
+
+  function step(now: number) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    // easeOutCubic — desaceleração natural no final.
+    const eased = 1 - Math.pow(1 - t, 3);
+    window.scrollTo(0, startY + distance * eased);
+    if (t < 1) {
+      activeScrollAnimationId = requestAnimationFrame(step);
+    } else {
+      activeScrollAnimationId = null;
+    }
+  }
+
+  activeScrollAnimationId = requestAnimationFrame(step);
+}
+
 type ItemDrawerMode =
   | { kind: "create"; prefillName?: string }
   | { kind: "edit"; item: Item }
@@ -144,7 +180,12 @@ export function ShoppingList({ user, onLogout }: Props) {
   const scrollToLetter = useCallback((letter: string) => {
     if (!availableLettersRef.current.has(letter)) return;
     const el = document.getElementById(`alpha-${letter}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!el) return;
+    const targetY = Math.max(
+      0,
+      el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET,
+    );
+    smoothScrollWindowTo(targetY);
   }, []);
 
   const activeCount = filteredItems.filter((it) => it.ativo).length;
