@@ -313,7 +313,9 @@ export function ShoppingList({ user, onLogout }: Props) {
         accentColor={accentColor}
       />
 
-      <div className="max-w-2xl mx-auto px-4">
+      <div
+        className={`max-w-2xl mx-auto pl-4 transition-[padding] ${alphaMode ? "pr-10" : "pr-4"}`}
+      >
         <div
           className="py-2 flex items-center justify-between gap-2"
           style={{ backgroundColor: palette.background }}
@@ -533,11 +535,12 @@ export function ShoppingList({ user, onLogout }: Props) {
       {alphaMode && inactiveItems.length > 0 && (
         <nav
           aria-label="Índice alfabético"
-          className="fixed right-0.5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center select-none py-1 rounded-lg"
+          className="fixed right-1 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center select-none py-1.5 px-0.5 rounded-xl border"
           style={{
-            backgroundColor: `${palette.background}cc`,
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backgroundColor: `${palette.background}f0`,
+            borderColor: `${palette.surfaceAlt}80`,
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
           }}
         >
           {ALPHABET.map((letter) => {
@@ -548,10 +551,10 @@ export function ShoppingList({ user, onLogout }: Props) {
                 type="button"
                 onClick={() => scrollToLetter(letter)}
                 disabled={!has}
-                className="w-5 h-5 flex items-center justify-center text-[10px] font-bold leading-none"
+                className="w-7 h-7 flex items-center justify-center text-[11px] font-bold leading-none"
                 style={{
                   color: has ? ACCENT : palette.textSecondary,
-                  opacity: has ? 1 : 0.25,
+                  opacity: has ? 1 : 0.3,
                 }}
                 aria-label={`Ir para letra ${letter}`}
               >
