@@ -30,17 +30,7 @@ export function useShoppingData(enabled: boolean): ShoppingData {
   const pausedKeys = useRef<Set<string>>(new Set());
   const hiddenRef = useRef(false);
 
-  const refetchItems = useCallback(async () => {
-    try {
-      const next = await api.items.list();
-      setItems(next);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro ao carregar");
-    }
-  }, []);
-
-  const refetch = useCallback(async () => {
+  const refetchLiveData = useCallback(async () => {
     try {
       const [its, cats, st] = await Promise.all([
         api.items.list(),
@@ -53,10 +43,18 @@ export function useShoppingData(enabled: boolean): ShoppingData {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao carregar");
+    }
+  }, []);
+
+  const refetch = useCallback(async () => {
+    try {
+      await refetchLiveData();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao carregar");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refetchLiveData]);
 
   // Carga inicial.
   useEffect(() => {
@@ -70,22 +68,22 @@ export function useShoppingData(enabled: boolean): ShoppingData {
     if (!enabled) return;
     const id = setInterval(() => {
       if (pausedKeys.current.size > 0 || hiddenRef.current) return;
-      refetchItems();
+      refetchLiveData();
     }, POLL_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [enabled, refetchItems]);
+  }, [enabled, refetchLiveData]);
 
   // Visibility.
   useEffect(() => {
     function handle() {
       hiddenRef.current = document.hidden;
       if (!document.hidden && enabled) {
-        refetchItems();
+        refetchLiveData();
       }
     }
     document.addEventListener("visibilitychange", handle);
     return () => document.removeEventListener("visibilitychange", handle);
-  }, [enabled, refetchItems]);
+  }, [enabled, refetchLiveData]);
 
   const pausePolling = useCallback((key: string) => {
     pausedKeys.current.add(key);
@@ -93,9 +91,9 @@ export function useShoppingData(enabled: boolean): ShoppingData {
   const resumePolling = useCallback(
     (key: string) => {
       pausedKeys.current.delete(key);
-      if (enabled) refetchItems();
+      if (enabled) refetchLiveData();
     },
-    [enabled, refetchItems],
+    [enabled, refetchLiveData],
   );
 
   const setCategories = useCallback(

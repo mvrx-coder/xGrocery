@@ -3,11 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import type { Item } from "../types";
 import type { Palette } from "../data/palettes";
-import { firstName } from "../constants";
 
 type QuantityDrawerProps = {
   item: Item | null;
-  userName: string;
   accentColor: string;
   palette: Palette;
   onClose: () => void;
@@ -16,7 +14,6 @@ type QuantityDrawerProps = {
 
 export function QuantityDrawer({
   item,
-  userName,
   accentColor,
   palette,
   onClose,
@@ -61,11 +58,11 @@ export function QuantityDrawer({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-md rounded-t-3xl overflow-hidden"
+            className="relative w-full max-w-md max-h-[88dvh] rounded-t-3xl overflow-hidden flex flex-col"
             style={{ backgroundColor: palette.surface }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-center pt-3 pb-1">
+            <div className="flex justify-center pt-3 pb-1 shrink-0 [@media(max-height:640px)]:pt-2">
               <div
                 className="w-10 h-1 rounded-full"
                 style={{ backgroundColor: palette.surfaceAlt }}
@@ -73,12 +70,12 @@ export function QuantityDrawer({
             </div>
 
             <div
-              className="flex items-center justify-between px-5 py-3 border-b"
+              className="flex items-center justify-between px-5 py-3 border-b shrink-0 [@media(max-height:640px)]:py-2"
               style={{ borderColor: palette.surfaceAlt }}
             >
               <span
-                className="text-xs font-semibold uppercase tracking-wider"
-                style={{ color: palette.textSecondary }}
+                className="text-base font-semibold"
+                style={{ color: palette.textPrimary }}
               >
                 Quantidade
               </span>
@@ -91,52 +88,64 @@ export function QuantityDrawer({
               </button>
             </div>
 
-            <div className="px-4 py-5 space-y-4">
-              <div>
-                <p
-                  className="text-base font-semibold leading-snug"
-                  style={{ color: palette.textPrimary }}
-                >
-                  {firstName(userName)}, você quer quantos desse?
-                </p>
-                <p
-                  className="text-sm mt-1"
+            <div className="px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4 overflow-y-auto [@media(max-height:640px)]:pt-3 [@media(max-height:640px)]:space-y-3">
+              <div className="space-y-1.5">
+                <label
+                  className="text-xs font-semibold uppercase tracking-wider"
                   style={{ color: palette.textSecondary }}
                 >
+                  Item
+                </label>
+                <div
+                  className="w-full px-4 py-2.5 rounded-xl text-base truncate [@media(max-height:640px)]:py-2"
+                  style={{
+                    backgroundColor: palette.surfaceAlt,
+                    color: palette.textPrimary,
+                  }}
+                >
                   {item.nome}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: palette.textSecondary }}
+                >
+                  Quantidade
+                </label>
+                <input
+                  ref={inputRef}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSave();
+                  }}
+                  placeholder="Ex: 6"
+                  className="w-full px-4 py-3 rounded-xl text-base outline-none tabular-nums"
+                  style={{
+                    backgroundColor: palette.surfaceAlt,
+                    color: palette.textPrimary,
+                    border: "1.5px solid transparent",
+                    caretColor: accentColor,
+                  }}
+                />
+
+                <p
+                  className="text-xs leading-snug"
+                  style={{ color: palette.textSecondary }}
+                >
+                  Em branco ou 1 = sem contador.
                 </p>
               </div>
 
-              <input
-                ref={inputRef}
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSave();
-                }}
-                placeholder="Ex: 6"
-                className="w-full text-center text-2xl font-bold py-3 rounded-xl outline-none tabular-nums"
-                style={{
-                  backgroundColor: palette.surfaceAlt,
-                  color: accentColor,
-                  caretColor: accentColor,
-                }}
-              />
-
-              <p
-                className="text-xs text-center"
-                style={{ color: palette.textSecondary }}
-              >
-                Em branco ou 1 = sem contador.
-              </p>
-
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-1">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-2.5 rounded-xl text-sm"
+                  className="flex-1 py-3 rounded-xl"
                   style={{
                     backgroundColor: palette.surfaceAlt,
                     color: palette.textPrimary,
@@ -147,7 +156,7 @@ export function QuantityDrawer({
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSave}
-                  className="flex-1 py-2.5 rounded-xl font-semibold text-sm"
+                  className="flex-1 py-3 rounded-xl font-semibold"
                   style={{ backgroundColor: accentColor, color: "#0a0a0a" }}
                 >
                   Salvar

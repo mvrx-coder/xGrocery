@@ -7,5 +7,5 @@ export default function App() {
 
   if (!user) return <LoginScreen onLogin={login} />;
 
-  return <ShoppingList user={user} onLogout={logout} />;
+  return <ShoppingList onLogout={logout} />;
 }

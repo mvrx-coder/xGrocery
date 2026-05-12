@@ -1,5 +1,7 @@
+import os
+import time
 import uuid
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
@@ -7,16 +9,19 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 
-PASSWORD = "Aa25101208"
+PASSWORD = "Aa123456"
+SESSION_TTL_SECONDS = int(
+    os.environ.get("XGROCERY_SESSION_TTL_SECONDS", str(60 * 60 * 24 * 30))
+)
 
-# Sessões em memória — token UUID -> user_id.
-# Reinício do servidor invalida sessões; usuários relogam (3 segundos, app de família).
-SESSIONS: Dict[str, int] = {}
+# Sessões em memória: token UUID -> (user_id, expires_at).
+# Reinício do servidor invalida sessões; usuários relogam rapidamente.
+SESSIONS: Dict[str, Tuple[int, float]] = {}
 
 
 def create_session(user_id: int) -> str:
     token = uuid.uuid4().hex
-    SESSIONS[token] = user_id
+    SESSIONS[token] = (user_id, time.time() + SESSION_TTL_SECONDS)
     return token
 
 
@@ -31,9 +36,13 @@ def get_current_user(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Token ausente")
     token = authorization[7:]
-    user_id = SESSIONS.get(token)
-    if not user_id:
+    session = SESSIONS.get(token)
+    if not session:
         raise HTTPException(401, "Token inválido")
+    user_id, expires_at = session
+    if expires_at < time.time():
+        destroy_session(token)
+        raise HTTPException(401, "Token expirado")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(401, "Usuário não encontrado")

@@ -3,7 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { ArrowDownAZ } from "lucide-react";
 import { api } from "../api";
 import { removeAccents } from "../constants";
-import type { ApproachKey, Category, Item, PaletteKey, User } from "../types";
+import type { ApproachKey, Category, Item, PaletteKey } from "../types";
 import { palettes } from "../data/palettes";
 import { useShoppingData } from "../hooks/useShoppingData";
 import { SearchBar } from "./SearchBar";
@@ -28,11 +28,10 @@ type ItemDrawerMode =
   | null;
 
 type Props = {
-  user: User;
   onLogout: () => void;
 };
 
-export function ShoppingList({ user, onLogout }: Props) {
+export function ShoppingList({ onLogout }: Props) {
   const {
     items,
     categories,
@@ -512,7 +511,6 @@ export function ShoppingList({ user, onLogout }: Props) {
 
         <QuantityDrawer
           item={quantityItem}
-          userName={user.name}
           accentColor={accentColor}
           palette={palette}
           onClose={handleQuantityClose}

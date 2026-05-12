@@ -3,7 +3,9 @@ import { useCallback, useRef } from "react";
 type LongPressOptions = {
   onLongPress: () => void;
   onClick?: () => void;
+  onDoubleClick?: () => void;
   threshold?: number;
+  doubleClickThreshold?: number;
   enabled?: boolean;
 };
 
@@ -11,14 +13,19 @@ type LongPressOptions = {
 // Acima desse delta, a interação é tratada como gesto de rolagem e o click
 // não dispara, mesmo que o touchend ocorra em cima do card.
 const MOVE_THRESHOLD_PX = 10;
+const DOUBLE_CLICK_THRESHOLD_MS = 350;
 
 export function useLongPress({
   onLongPress,
   onClick,
+  onDoubleClick,
   threshold = 500,
+  doubleClickThreshold = DOUBLE_CLICK_THRESHOLD_MS,
   enabled = true,
 }: LongPressOptions) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const singleClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapTime = useRef(0);
   const isLongPress = useRef(false);
   const moved = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
@@ -65,23 +72,49 @@ export function useLongPress({
         timerRef.current = null;
       }
 
-      // Só dispara click se NÃO foi long press E o usuário NÃO arrastou.
+      // Só dispara gesto se NÃO foi long press E o usuário NÃO arrastou.
       // Sem checar `moved`, qualquer toque para rolar a lista vira toggle.
-      if (!isLongPress.current && !moved.current && onClick) {
-        onClick();
+      if (!isLongPress.current && !moved.current) {
+        if (onDoubleClick) {
+          const now = Date.now();
+          const isDoubleClick = now - lastTapTime.current <= doubleClickThreshold;
+
+          if (isDoubleClick) {
+            lastTapTime.current = 0;
+            if (singleClickTimerRef.current) {
+              clearTimeout(singleClickTimerRef.current);
+              singleClickTimerRef.current = null;
+            }
+            onDoubleClick();
+          } else {
+            lastTapTime.current = now;
+            if (onClick) {
+              singleClickTimerRef.current = setTimeout(() => {
+                singleClickTimerRef.current = null;
+                onClick();
+              }, doubleClickThreshold);
+            }
+          }
+        } else if (onClick) {
+          onClick();
+        }
       }
 
       if ("touches" in e) {
         e.preventDefault();
       }
     },
-    [onClick],
+    [doubleClickThreshold, onClick, onDoubleClick],
   );
 
   const cancel = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
+    }
+    if (singleClickTimerRef.current) {
+      clearTimeout(singleClickTimerRef.current);
+      singleClickTimerRef.current = null;
     }
     // touchcancel é disparado pelo iOS quando o navegador "rouba" o gesto
     // para fazer scroll. Marcar moved=true garante que o end subsequente

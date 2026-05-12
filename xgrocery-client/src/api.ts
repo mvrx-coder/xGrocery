@@ -31,8 +31,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || res.statusText);
+    const ct = res.headers.get("content-type") || "";
+    let message = res.statusText;
+    if (ct.includes("application/json")) {
+      const payload = await res.json().catch(() => null);
+      if (typeof payload?.detail === "string") {
+        message = payload.detail;
+      } else if (Array.isArray(payload?.detail)) {
+        message = payload.detail
+          .map((err: { msg?: string }) => err.msg)
+          .filter(Boolean)
+          .join("; ");
+      } else if (payload) {
+        message = JSON.stringify(payload);
+      }
+    } else {
+      message = (await res.text().catch(() => "")) || message;
+    }
+    throw new Error(message);
   }
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get("content-type") || "";

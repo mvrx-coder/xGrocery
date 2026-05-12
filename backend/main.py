@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -17,17 +18,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="xGrocery", version="0.1.0", lifespan=lifespan)
 
-# CORS:
-#   - HTTP local (dev na LAN: localhost / 127.0.0.1 / 192.168.x.x / 10.x / 172.x)
-#   - HTTPS público (prod via Cloudflare Tunnel — mesmo se servido na mesma
-#     origem pelo reverse proxy, deixar aberto não custa nada e cobre testes
-#     diretos pelo hostname *.trycloudflare.com / domínio próprio).
+LOCAL_ORIGIN_REGEX = (
+    r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|"
+    r"172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?"
+)
+PUBLIC_ORIGIN_REGEX = os.environ.get("XGROCERY_PUBLIC_ORIGIN_REGEX", "").strip()
+ALLOW_ORIGIN_REGEX = (
+    f"{LOCAL_ORIGIN_REGEX}|{PUBLIC_ORIGIN_REGEX}"
+    if PUBLIC_ORIGIN_REGEX
+    else LOCAL_ORIGIN_REGEX
+)
+
+# CORS local por padrão. Para hostname público direto no backend, definir
+# XGROCERY_PUBLIC_ORIGIN_REGEX com o domínio permitido.
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=(
-        r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?"
-        r"|https://[A-Za-z0-9.\-]+(\.[A-Za-z]{2,})+"
-    ),
+    allow_origin_regex=ALLOW_ORIGIN_REGEX,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

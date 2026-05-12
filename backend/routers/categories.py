@@ -1,4 +1,5 @@
 from typing import List
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -9,6 +10,30 @@ from ..models import Category, Item, User
 from ..schemas import CategoryCreate, CategoryOut, CategoryPatch
 
 router = APIRouter(prefix="/api/categories", tags=["categories"])
+
+
+HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+def _clean_name(nome: str) -> str:
+    cleaned = nome.strip()
+    if not cleaned:
+        raise HTTPException(400, "Nome obrigatório")
+    return cleaned
+
+
+def _validate_color(cor: str) -> str:
+    cleaned = cor.strip()
+    if not HEX_COLOR_RE.fullmatch(cleaned):
+        raise HTTPException(400, "Cor inválida")
+    return cleaned
+
+
+def _category_name_exists(db: Session, nome: str, exclude_id: int | None = None) -> bool:
+    query = db.query(Category).filter(Category.nome.ilike(nome))
+    if exclude_id is not None:
+        query = query.filter(Category.id != exclude_id)
+    return query.first() is not None
 
 
 @router.get("", response_model=List[CategoryOut])
@@ -29,15 +54,14 @@ def create_category(
     db: Session = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
-    nome = body.nome.strip()
-    if not nome:
-        raise HTTPException(400, "Nome obrigatório")
-    if db.query(Category).filter(Category.nome == nome).first():
+    nome = _clean_name(body.nome)
+    cor = _validate_color(body.cor)
+    if _category_name_exists(db, nome):
         raise HTTPException(409, "Categoria já existe")
 
     category = Category(
         nome=nome,
-        cor=body.cor,
+        cor=cor,
         ordem_exibicao=body.ordem_exibicao,
     )
     db.add(category)
@@ -58,9 +82,12 @@ def patch_category(
         raise HTTPException(404, "Categoria não encontrada")
 
     if body.nome is not None:
-        category.nome = body.nome.strip()
+        nome = _clean_name(body.nome)
+        if _category_name_exists(db, nome, exclude_id=category_id):
+            raise HTTPException(409, "Categoria já existe")
+        category.nome = nome
     if body.cor is not None:
-        category.cor = body.cor
+        category.cor = _validate_color(body.cor)
     if body.ordem_exibicao is not None:
         category.ordem_exibicao = body.ordem_exibicao
 

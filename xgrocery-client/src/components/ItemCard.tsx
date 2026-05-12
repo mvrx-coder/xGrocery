@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, Circle, MoreVertical } from "lucide-react";
+import type { MouseEvent, TouchEvent } from "react";
 import type { ApproachKey, Category, Item } from "../types";
 import type { Palette } from "../data/palettes";
 import { useLongPress } from "../hooks/useLongPress";
@@ -24,6 +25,9 @@ export function ItemCard({
   onLongPressActive,
 }: ItemCardProps) {
   const categoryColor = category.cor;
+  const stopCardGesture = (
+    e: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>,
+  ) => e.stopPropagation();
 
   const longPressHandlers = useLongPress({
     onLongPress: () => {
@@ -31,7 +35,8 @@ export function ItemCard({
         onLongPressActive(item);
       }
     },
-    onClick: () => onToggle(item),
+    onClick: item.ativo ? undefined : () => onToggle(item),
+    onDoubleClick: item.ativo ? () => onToggle(item) : undefined,
     enabled: item.ativo,
   });
 
@@ -98,6 +103,10 @@ export function ItemCard({
           <button
             type="button"
             className="p-2 -mr-2 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
+            onMouseDown={stopCardGesture}
+            onMouseUp={stopCardGesture}
+            onTouchStart={stopCardGesture}
+            onTouchEnd={stopCardGesture}
             onClick={(e) => {
               e.stopPropagation();
               onContextMenu(item, { x: e.clientX, y: e.clientY });
@@ -181,6 +190,10 @@ export function ItemCard({
           <button
             type="button"
             className="p-2 -mr-2 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
+            onMouseDown={stopCardGesture}
+            onMouseUp={stopCardGesture}
+            onTouchStart={stopCardGesture}
+            onTouchEnd={stopCardGesture}
             onClick={(e) => {
               e.stopPropagation();
               onContextMenu(item, { x: e.clientX, y: e.clientY });
@@ -268,6 +281,10 @@ export function ItemCard({
         <button
           type="button"
           className="p-2 -mr-2 rounded-lg opacity-50 hover:opacity-100 transition-opacity"
+          onMouseDown={stopCardGesture}
+          onMouseUp={stopCardGesture}
+          onTouchStart={stopCardGesture}
+          onTouchEnd={stopCardGesture}
           onClick={(e) => {
             e.stopPropagation();
             onContextMenu(item, { x: e.clientX, y: e.clientY });
