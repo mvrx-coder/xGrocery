@@ -137,7 +137,7 @@ export function ItemDrawer({
                     border: `1.5px solid ${nameError ? "#ff6b6b" : "transparent"}`,
                     caretColor: accentColor,
                   }}
-                  autoFocus
+                  autoFocus={mode.kind === "edit" || !mode.prefillName}
                 />
                 {nameError && (
                   <p className="text-xs" style={{ color: "#ff6b6b" }}>

@@ -22,6 +22,13 @@ const ACCENT = "#39ff14";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
+function blurActiveElement() {
+  const activeElement = document.activeElement;
+  if (activeElement instanceof HTMLElement) {
+    activeElement.blur();
+  }
+}
+
 type ItemDrawerMode =
   | { kind: "create"; prefillName?: string }
   | { kind: "edit"; item: Item }
@@ -136,13 +143,23 @@ export function ShoppingList({ onLogout }: Props) {
 
   const activeCount = filteredItems.filter((it) => it.ativo).length;
 
+  const revealFullList = useCallback(() => {
+    setSearchQuery("");
+    setCategoryFilter(null);
+    requestAnimationFrame(blurActiveElement);
+  }, []);
+
   const handleToggle = useCallback(
     async (item: Item) => {
+      const isActivating = !item.ativo;
       const optimistic: Item = {
         ...item,
-        ativo: !item.ativo,
-        quantidade: !item.ativo ? item.quantidade : null,
+        ativo: isActivating,
+        quantidade: isActivating ? item.quantidade : null,
       };
+      if (isActivating) {
+        revealFullList();
+      }
       setItems((prev) =>
         prev.map((it) => (it.id === item.id ? optimistic : it)),
       );
@@ -155,7 +172,7 @@ export function ShoppingList({ onLogout }: Props) {
         setItems((prev) => prev.map((it) => (it.id === item.id ? item : it)));
       }
     },
-    [setItems],
+    [revealFullList, setItems],
   );
 
   const handleContextMenu = useCallback((item: Item) => {
@@ -209,9 +226,13 @@ export function ShoppingList({ onLogout }: Props) {
   );
 
   const handleAddItem = useCallback(() => {
+    const prefillName = searchQuery.trim() || undefined;
+    if (prefillName) {
+      blurActiveElement();
+    }
     setItemDrawer({
       kind: "create",
-      prefillName: searchQuery.trim() || undefined,
+      prefillName,
     });
   }, [searchQuery]);
 
@@ -241,7 +262,7 @@ export function ShoppingList({ onLogout }: Props) {
           quantidade: null,
         });
         setItems((prev) => [...prev, created]);
-        setSearchQuery("");
+        revealFullList();
       } else {
         const saved = await api.items.patch(mode.item.id, {
           nome: data.nome,
@@ -252,7 +273,7 @@ export function ShoppingList({ onLogout }: Props) {
         );
       }
     },
-    [setItems],
+    [revealFullList, setItems],
   );
 
   const handlePaletteChange = useCallback(
