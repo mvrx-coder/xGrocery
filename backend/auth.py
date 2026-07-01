@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from .db import get_db
 from .models import User
 
-PASSWORD = "Aa123456"
 SESSION_TTL_SECONDS = int(
     os.environ.get("XGROCERY_SESSION_TTL_SECONDS", str(60 * 60 * 24 * 30))
 )

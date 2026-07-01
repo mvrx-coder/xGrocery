@@ -2,25 +2,24 @@ import { useState } from "react";
 import { FAMILY_NAMES, colorForUser, initialFor } from "../constants";
 
 interface Props {
-  onLogin: (name: string, password: string) => Promise<void>;
+  onLogin: (name: string) => Promise<void>;
 }
-
-const ACCENT = "#39ff14";
 
 export function LoginScreen({ onLogin }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function submit() {
-    if (!selected || !password || submitting) return;
+  async function submit(name: string) {
+    if (submitting) return;
+    setSelected(name);
     setSubmitting(true);
     setError(null);
     try {
-      await onLogin(selected, password);
+      await onLogin(name);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao entrar");
+      setSelected(null);
     } finally {
       setSubmitting(false);
     }
@@ -52,15 +51,16 @@ export function LoginScreen({ onLogin }: Props) {
           <p className="text-slate-400 text-sm mt-2">Quem está aí?</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3">
           {FAMILY_NAMES.map((name) => {
             const color = colorForUser(name);
             const isSel = selected === name;
             return (
               <button
                 key={name}
-                onClick={() => setSelected(name)}
-                className="flex flex-col items-center gap-2 rounded-2xl py-5 px-2 border-2 transition-all"
+                onClick={() => submit(name)}
+                disabled={submitting}
+                className="flex flex-col items-center gap-2 rounded-2xl py-5 px-2 border-2 transition-all disabled:opacity-60"
                 style={{
                   backgroundColor: isSel ? `${color}25` : `${color}10`,
                   borderColor: isSel ? color : "transparent",
@@ -81,40 +81,9 @@ export function LoginScreen({ onLogin }: Props) {
           })}
         </div>
 
-        <input
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
-          style={{ caretColor: ACCENT }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = ACCENT;
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${ACCENT}40`;
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#334155";
-            e.currentTarget.style.boxShadow = "none";
-          }}
-        />
-
         {error && (
-          <p className="mt-3 text-sm text-rose-400 text-center">{error}</p>
+          <p className="mt-4 text-sm text-rose-400 text-center">{error}</p>
         )}
-
-        <button
-          onClick={submit}
-          disabled={!selected || !password || submitting}
-          className="mt-4 w-full disabled:bg-slate-800 disabled:text-slate-500 transition-colors font-semibold rounded-xl py-3"
-          style={{
-            backgroundColor:
-              !selected || !password || submitting ? undefined : ACCENT,
-            color: !selected || !password || submitting ? undefined : "#0a0a0a",
-          }}
-        >
-          {submitting ? "Entrando..." : "Entrar"}
-        </button>
       </div>
     </div>
   );

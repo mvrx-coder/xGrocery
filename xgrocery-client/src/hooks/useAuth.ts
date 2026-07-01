@@ -19,8 +19,8 @@ export function useAuth() {
     getToken() ? loadUser() : null,
   );
 
-  const login = useCallback(async (name: string, password: string) => {
-    const res = await api.login(name, password);
+  const login = useCallback(async (name: string) => {
+    const res = await api.login(name);
     setToken(res.token);
     localStorage.setItem(USER_KEY, JSON.stringify(res.user));
     setUser(res.user);

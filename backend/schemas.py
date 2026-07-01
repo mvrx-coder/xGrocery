@@ -12,7 +12,7 @@ class UserOut(BaseModel):
 
 class LoginRequest(BaseModel):
     name: str
-    password: str
+    password: Optional[str] = None  # ignorado — entrada sem senha
 
 
 class LoginResponse(BaseModel):
