@@ -4,6 +4,7 @@ import type { MouseEvent, TouchEvent } from "react";
 import type { ApproachKey, Category, Item } from "../types";
 import type { Palette } from "../data/palettes";
 import { useLongPress } from "../hooks/useLongPress";
+import { QuantityBadge } from "./QuantityBadge";
 
 type ItemCardProps = {
   item: Item;
@@ -40,8 +41,10 @@ export function ItemCard({
     enabled: item.ativo,
   });
 
-  const showBadge =
-    item.ativo && item.quantidade != null && item.quantidade > 1;
+  const badgeQuantity =
+    item.ativo && item.quantidade != null && item.quantidade > 1
+      ? item.quantidade
+      : null;
 
   // Approach A: Elevated & Glow
   if (approach === "elevated") {
@@ -79,16 +82,11 @@ export function ItemCard({
           />
 
           <div className="flex-1 min-w-0 flex items-center gap-2">
-            {showBadge && (
-              <span
-                className="text-xs font-semibold px-1.5 py-0.5 rounded-md flex-shrink-0 tabular-nums"
-                style={{
-                  backgroundColor: `${categoryColor}30`,
-                  color: categoryColor,
-                }}
-              >
-                {item.quantidade}x
-              </span>
+            {badgeQuantity != null && (
+              <QuantityBadge
+                quantidade={badgeQuantity}
+                categoryColor={categoryColor}
+              />
             )}
             <span
               className="text-base font-medium truncate"
@@ -165,16 +163,11 @@ export function ItemCard({
           </motion.div>
 
           <div className="flex-1 min-w-0 flex items-center gap-2">
-            {showBadge && (
-              <span
-                className="text-xs font-semibold px-1.5 py-0.5 rounded-md flex-shrink-0 tabular-nums"
-                style={{
-                  backgroundColor: `${categoryColor}30`,
-                  color: categoryColor,
-                }}
-              >
-                {item.quantidade}x
-              </span>
+            {badgeQuantity != null && (
+              <QuantityBadge
+                quantidade={badgeQuantity}
+                categoryColor={categoryColor}
+              />
             )}
             <span
               className="text-base truncate"
@@ -257,16 +250,11 @@ export function ItemCard({
         </div>
 
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          {showBadge && (
-            <span
-              className="text-xs font-semibold px-1.5 py-0.5 rounded-md flex-shrink-0 tabular-nums"
-              style={{
-                backgroundColor: `${categoryColor}30`,
-                color: categoryColor,
-              }}
-            >
-              {item.quantidade}x
-            </span>
+          {badgeQuantity != null && (
+            <QuantityBadge
+              quantidade={badgeQuantity}
+              categoryColor={categoryColor}
+            />
           )}
           <span
             className="text-base font-medium truncate"
