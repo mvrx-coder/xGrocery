@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import type { Category, Item } from "../types";
@@ -37,6 +37,13 @@ export function ItemDrawer({
   const [touched, setTouched] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // `categories` entra por ref de propósito. O polling de 15s troca a
+  // referência do array mesmo quando o conteúdo é idêntico; com `categories`
+  // nas dependências, este efeito rodava de novo com o drawer aberto e
+  // sobrescrevia o que o usuário estava digitando.
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
+
   useEffect(() => {
     if (!open || !mode) return;
     if (mode.kind === "edit") {
@@ -44,9 +51,16 @@ export function ItemDrawer({
       setCategoryId(mode.item.categoria_id);
     } else {
       setName(mode.prefillName ?? "");
-      setCategoryId(categories[0]?.id ?? null);
+      setCategoryId(categoriesRef.current[0]?.id ?? null);
     }
     setTouched(false);
+  }, [open, mode]);
+
+  // Se as categorias só chegarem depois de o drawer abrir, escolhe a primeira
+  // — sem tocar no que o usuário já digitou ou selecionou.
+  useEffect(() => {
+    if (!open || mode?.kind !== "create") return;
+    setCategoryId((prev) => prev ?? categories[0]?.id ?? null);
   }, [open, mode, categories]);
 
   const nameError = touched && name.trim().length === 0;

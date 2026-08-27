@@ -209,9 +209,18 @@ export function ShoppingList({ onLogout }: Props) {
     resumePolling("quantity-drawer");
   }, [resumePolling]);
 
-  const handleEdit = useCallback((item: Item) => {
-    setItemDrawer({ kind: "edit", item });
-  }, []);
+  const handleEdit = useCallback(
+    (item: Item) => {
+      pausePolling("item-drawer");
+      setItemDrawer({ kind: "edit", item });
+    },
+    [pausePolling],
+  );
+
+  const handleItemDrawerClose = useCallback(() => {
+    setItemDrawer(null);
+    resumePolling("item-drawer");
+  }, [resumePolling]);
 
   const handleDelete = useCallback(
     async (item: Item) => {
@@ -230,15 +239,22 @@ export function ShoppingList({ onLogout }: Props) {
     if (prefillName) {
       blurActiveElement();
     }
+    pausePolling("item-drawer");
     setItemDrawer({
       kind: "create",
       prefillName,
     });
-  }, [searchQuery]);
+  }, [pausePolling, searchQuery]);
 
   const handleAddCategory = useCallback(() => {
+    pausePolling("category-drawer");
     setCategoryDrawerOpen(true);
-  }, []);
+  }, [pausePolling]);
+
+  const handleCategoryDrawerClose = useCallback(() => {
+    setCategoryDrawerOpen(false);
+    resumePolling("category-drawer");
+  }, [resumePolling]);
 
   const handleSaveCategory = useCallback(
     async (data: CategoryFormData) => {
@@ -515,7 +531,7 @@ export function ShoppingList({ onLogout }: Props) {
 
         <CategoryDrawer
           open={categoryDrawerOpen}
-          onClose={() => setCategoryDrawerOpen(false)}
+          onClose={handleCategoryDrawerClose}
           onSave={handleSaveCategory}
           palette={palette}
         />
@@ -526,7 +542,7 @@ export function ShoppingList({ onLogout }: Props) {
           categories={categories}
           palette={palette}
           accentColor={accentColor}
-          onClose={() => setItemDrawer(null)}
+          onClose={handleItemDrawerClose}
           onSave={handleSaveItem}
         />
 

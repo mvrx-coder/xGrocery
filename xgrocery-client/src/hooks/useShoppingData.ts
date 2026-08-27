@@ -4,6 +4,17 @@ import type { Category, Item, Settings } from "../types";
 
 const POLL_INTERVAL_MS = 15_000;
 
+/**
+ * Mantém a referência anterior quando o payload do servidor é idêntico.
+ *
+ * Sem isso, cada ciclo do polling entrega arrays novos e re-renderiza a lista
+ * inteira a cada 15s — o que fazia a tela "piscar" e, em componentes que
+ * derivam estado de props, apagava o que o usuário estava digitando.
+ */
+function keepIfSame<T>(prev: T, next: T): T {
+  return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+}
+
 type ShoppingData = {
   items: Item[];
   categories: Category[];
@@ -37,9 +48,9 @@ export function useShoppingData(enabled: boolean): ShoppingData {
         api.categories.list(),
         api.settings.get(),
       ]);
-      setItems(its);
-      setCategoriesState(cats);
-      setSettings(st);
+      setItems((prev) => keepIfSame(prev, its));
+      setCategoriesState((prev) => keepIfSame(prev, cats));
+      setSettings((prev) => keepIfSame(prev, st));
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao carregar");
@@ -77,7 +88,9 @@ export function useShoppingData(enabled: boolean): ShoppingData {
   useEffect(() => {
     function handle() {
       hiddenRef.current = document.hidden;
-      if (!document.hidden && enabled) {
+      // Respeita a pausa: voltar para a aba com um drawer aberto não pode
+      // recarregar por baixo de quem está editando.
+      if (!document.hidden && enabled && pausedKeys.current.size === 0) {
         refetchLiveData();
       }
     }
