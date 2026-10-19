@@ -16,6 +16,7 @@ export type Item = {
   categoria_id: number;
   ativo: boolean;
   quantidade: number | null;
+  foto_versao: number | null;
   updated_at: string;
 };
 

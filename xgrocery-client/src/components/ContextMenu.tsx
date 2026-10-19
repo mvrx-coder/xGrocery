@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Edit3, Trash2, X } from "lucide-react";
+import { Camera, Edit3, ImageOff, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import type { Item } from "../types";
 import type { Palette } from "../data/palettes";
@@ -9,6 +9,8 @@ type ContextMenuProps = {
   onClose: () => void;
   onEdit: (item: Item) => void;
   onDelete: (item: Item) => void;
+  onPickPhoto: (item: Item) => void;
+  onRemovePhoto: (item: Item) => void;
   palette: Palette;
   accentColor: string;
 };
@@ -18,15 +20,19 @@ export function ContextMenu({
   onClose,
   onEdit,
   onDelete,
+  onPickPhoto,
+  onRemovePhoto,
   palette,
   accentColor,
 }: ContextMenuProps) {
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState<"item" | "photo" | null>(
+    null,
+  );
 
   if (!item) return null;
 
   function close() {
-    setConfirming(false);
+    setConfirming(null);
     onClose();
   }
 
@@ -87,7 +93,34 @@ export function ContextMenu({
               </button>
 
               <button
-                onClick={() => setConfirming(true)}
+                onClick={() => {
+                  // Abre o seletor ainda dentro do toque: o navegador só
+                  // aceita input.click() disparado por gesto do usuário.
+                  onPickPhoto(item);
+                  close();
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                style={{ color: palette.textPrimary }}
+              >
+                <Camera size={20} style={{ color: accentColor }} />
+                <span className="text-base">
+                  {item.foto_versao != null ? "Trocar foto" : "Adicionar foto"}
+                </span>
+              </button>
+
+              {item.foto_versao != null && (
+                <button
+                  onClick={() => setConfirming("photo")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
+                  style={{ color: palette.textPrimary }}
+                >
+                  <ImageOff size={20} style={{ color: palette.textSecondary }} />
+                  <span className="text-base">Remover foto</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setConfirming("item")}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
                 style={{ color: palette.textPrimary }}
               >
@@ -100,11 +133,12 @@ export function ContextMenu({
           {confirming && (
             <div className="p-4 space-y-3">
               <p style={{ color: palette.textPrimary }}>
-                Excluir <strong>{item.nome}</strong>?
+                {confirming === "photo" ? "Remover a foto de " : "Excluir "}
+                <strong>{item.nome}</strong>?
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setConfirming(false)}
+                  onClick={() => setConfirming(null)}
                   className="flex-1 py-3 rounded-xl"
                   style={{
                     backgroundColor: palette.surfaceAlt,
@@ -115,13 +149,14 @@ export function ContextMenu({
                 </button>
                 <button
                   onClick={() => {
-                    onDelete(item);
+                    if (confirming === "photo") onRemovePhoto(item);
+                    else onDelete(item);
                     close();
                   }}
                   className="flex-1 py-3 rounded-xl font-semibold"
                   style={{ backgroundColor: "#ff6b6b", color: "#0a0a0a" }}
                 >
-                  Excluir
+                  {confirming === "photo" ? "Remover" : "Excluir"}
                 </button>
               </div>
             </div>

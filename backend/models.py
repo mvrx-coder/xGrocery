@@ -34,6 +34,9 @@ class Item(Base):
     categoria_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     ativo = Column(Boolean, default=False, nullable=False)
     quantidade = Column(Integer, nullable=True)
+    # Epoch em ms do último upload de foto; None = item sem foto.
+    # Vai na URL da imagem para furar o cache quando a foto é trocada.
+    foto_versao = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False

@@ -76,6 +76,7 @@ Senha única para todos: `Aa123456` (definida em `backend/auth.py`).
 - **Marcar/desmarcar item:** toque simples em item inativo ativa o item. Para desativar um item ativo, use duplo toque/clique. Ao desativar, a quantidade é zerada.
 - **Definir quantidade:** **long press (≈500ms) em um item ativo** abre o drawer "_Nome_, você quer quantos desse?". Digita o número e salva. Long press em item inativo é ignorado.
 - **Editar/excluir item:** botão `⋮` no card abre menu com Editar e Excluir. Excluir pede confirmação.
+- **Foto do produto:** no `⋮`, "Adicionar foto" abre câmera ou galeria; depois vira "Trocar foto" e aparece "Remover foto" (pede confirmação). Item com foto mostra uma miniatura ao lado do nome — toque nela abre a foto em tela cheia (não ativa/desativa o item); toque em qualquer lugar fecha.
 - **Buscar:** campo no topo filtra por nome (ignora acentos).
 - **Adicionar item:** toque simples no `+` (verde). Se houver texto na busca, o nome vem pré-preenchido.
 - **Adicionar categoria:** long press no `+` abre drawer com 12 cores pré-definidas.
@@ -88,6 +89,7 @@ Senha única para todos: `Aa123456` (definida em `backend/auth.py`).
 - Polling automático a cada 15s — atualiza itens, categorias e configurações; pausa quando a aba está oculta ou o drawer de quantidade está aberto.
 - Quando o backend recebe `PATCH ativo=false`, ele zera `quantidade` no servidor (não confia no cliente) — `frontend → atualização otimista` segue o mesmo princípio.
 - Sessões ficam em memória — restart do backend faz todos relogarem.
+- Fotos: o celular reduz a imagem antes de enviar (≤1280px + miniatura 160px, JPEG). Ficam em `fotos/` ao lado do banco (`XGROCERY_PHOTOS_DIR` para mudar), fora do git. A URL leva `?v=<foto_versao>` e é cacheada para sempre; o `<img>` se autentica por cookie espelhado do token (não vai token na URL nem no log).
 - O frontend usa atualização otimista para toggle e exclusão. Se a chamada falhar, reverte.
 - CORS aceita rede local por padrão. Para liberar um hostname público direto no backend, defina `XGROCERY_PUBLIC_ORIGIN_REGEX`.
 

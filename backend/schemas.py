@@ -47,6 +47,7 @@ class ItemOut(BaseModel):
     categoria_id: int
     ativo: bool
     quantidade: Optional[int] = None
+    foto_versao: Optional[int] = None
     updated_at: datetime
 
 

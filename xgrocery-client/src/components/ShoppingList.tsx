@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ArrowDownAZ } from "lucide-react";
 import { api } from "../api";
@@ -14,6 +14,8 @@ import { ComparisonView } from "./ComparisonView";
 import { CategoryDrawer, type CategoryFormData } from "./CategoryDrawer";
 import { ItemDrawer, type ItemFormData } from "./ItemDrawer";
 import { QuantityDrawer } from "./QuantityDrawer";
+import { PhotoViewer } from "./PhotoViewer";
+import { resizePhoto } from "../lib/resizePhoto";
 
 // Accent fixo da marca xGrocery — verde da paleta Nocturne (food).
 // Mantém botões/foco com identidade consistente independente da ordem das
@@ -63,6 +65,10 @@ export function ShoppingList({ onLogout }: Props) {
   const [itemDrawer, setItemDrawer] = useState<ItemDrawerMode>(null);
   const [quantityItem, setQuantityItem] = useState<Item | null>(null);
   const [alphaMode, setAlphaMode] = useState(false);
+  const [photoItem, setPhotoItem] = useState<Item | null>(null);
+  const [photoStatus, setPhotoStatus] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoTargetRef = useRef<Item | null>(null);
 
   const currentPalette: PaletteKey = settings?.paleta ?? "nocturne";
   const currentApproach: ApproachKey =
@@ -234,6 +240,50 @@ export function ShoppingList({ onLogout }: Props) {
     [setItems],
   );
 
+  // Sem `capture` no input: o celular oferece câmera ou galeria.
+  const handlePickPhoto = useCallback((item: Item) => {
+    photoTargetRef.current = item;
+    photoInputRef.current?.click();
+  }, []);
+
+  const handlePhotoSelected = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      const target = photoTargetRef.current;
+      e.target.value = ""; // permite escolher o mesmo arquivo de novo
+      photoTargetRef.current = null;
+      if (!file || !target) return;
+
+      setPhotoStatus("Enviando foto…");
+      try {
+        const { photo, mini } = await resizePhoto(file);
+        const saved = await api.items.uploadPhoto(target.id, photo, mini);
+        setItems((prev) =>
+          prev.map((it) => (it.id === target.id ? saved : it)),
+        );
+        setPhotoStatus(null);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "erro desconhecido";
+        setPhotoStatus(`Falha ao enviar foto: ${msg}`);
+        setTimeout(() => setPhotoStatus(null), 4000);
+      }
+    },
+    [setItems],
+  );
+
+  const handleRemovePhoto = useCallback(
+    async (item: Item) => {
+      try {
+        const saved = await api.items.deletePhoto(item.id);
+        setItems((prev) => prev.map((it) => (it.id === item.id ? saved : it)));
+      } catch {
+        setPhotoStatus("Falha ao remover a foto");
+        setTimeout(() => setPhotoStatus(null), 4000);
+      }
+    },
+    [setItems],
+  );
+
   const handleAddItem = useCallback(() => {
     const prefillName = searchQuery.trim() || undefined;
     if (prefillName) {
@@ -391,6 +441,7 @@ export function ShoppingList({ onLogout }: Props) {
                     onToggle={handleToggle}
                     onContextMenu={handleContextMenu}
                     onLongPressActive={handleLongPressActive}
+                    onOpenPhoto={setPhotoItem}
                   />
                 );
               })}
@@ -453,6 +504,7 @@ export function ShoppingList({ onLogout }: Props) {
                         onToggle={handleToggle}
                         onContextMenu={handleContextMenu}
                         onLongPressActive={handleLongPressActive}
+                        onOpenPhoto={setPhotoItem}
                       />
                     );
                   })}
@@ -473,6 +525,7 @@ export function ShoppingList({ onLogout }: Props) {
                       onToggle={handleToggle}
                       onContextMenu={handleContextMenu}
                       onLongPressActive={handleLongPressActive}
+                      onOpenPhoto={setPhotoItem}
                     />
                   );
                 })}
@@ -525,8 +578,24 @@ export function ShoppingList({ onLogout }: Props) {
           onClose={() => setContextMenuItem(null)}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onPickPhoto={handlePickPhoto}
+          onRemovePhoto={handleRemovePhoto}
           palette={palette}
           accentColor={accentColor}
+        />
+
+        <PhotoViewer
+          item={photoItem}
+          onClose={() => setPhotoItem(null)}
+          palette={palette}
+        />
+
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoSelected}
         />
 
         <CategoryDrawer
@@ -554,6 +623,19 @@ export function ShoppingList({ onLogout }: Props) {
           onSave={handleQuantitySave}
         />
       </div>
+
+      {photoStatus && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm shadow-lg"
+          style={{
+            backgroundColor: palette.surface,
+            color: palette.textPrimary,
+          }}
+          role="status"
+        >
+          {photoStatus}
+        </div>
+      )}
 
       {/* Sidebar alfabética — fixed à borda direita da viewport, só aparece
           quando alphaMode está ligado e há itens inativos. Letras sem itens

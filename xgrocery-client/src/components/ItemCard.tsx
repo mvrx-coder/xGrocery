@@ -3,6 +3,7 @@ import { Check, Circle, MoreVertical } from "lucide-react";
 import type { MouseEvent, TouchEvent } from "react";
 import type { ApproachKey, Category, Item } from "../types";
 import type { Palette } from "../data/palettes";
+import { photoUrl } from "../api";
 import { useLongPress } from "../hooks/useLongPress";
 import { QuantityBadge } from "./QuantityBadge";
 
@@ -14,6 +15,7 @@ type ItemCardProps = {
   onToggle: (item: Item) => void;
   onContextMenu: (item: Item, position: { x: number; y: number }) => void;
   onLongPressActive: (item: Item) => void;
+  onOpenPhoto: (item: Item) => void;
 };
 
 export function ItemCard({
@@ -24,6 +26,7 @@ export function ItemCard({
   onToggle,
   onContextMenu,
   onLongPressActive,
+  onOpenPhoto,
 }: ItemCardProps) {
   const categoryColor = category.cor;
   const stopCardGesture = (
@@ -40,6 +43,34 @@ export function ItemCard({
     onDoubleClick: item.ativo ? () => onToggle(item) : undefined,
     enabled: item.ativo,
   });
+
+  // Miniatura só existe quando o item tem foto. Toque nela abre a foto e
+  // não chega ao card (não ativa/desativa o item) — mesmo truque do ⋮.
+  const thumb =
+    item.foto_versao != null ? (
+      <button
+        type="button"
+        className="w-7 h-7 -my-1 rounded-md overflow-hidden flex-shrink-0"
+        style={{ opacity: item.ativo ? 1 : 0.6 }}
+        onMouseDown={stopCardGesture}
+        onMouseUp={stopCardGesture}
+        onTouchStart={stopCardGesture}
+        onTouchEnd={stopCardGesture}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenPhoto(item);
+        }}
+        aria-label={`Ver foto de ${item.nome}`}
+      >
+        <img
+          src={photoUrl(item, true)}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="w-full h-full object-cover"
+        />
+      </button>
+    ) : null;
 
   const badgeQuantity =
     item.ativo && item.quantidade != null && item.quantidade > 1
@@ -82,6 +113,7 @@ export function ItemCard({
           />
 
           <div className="flex-1 min-w-0 flex items-center gap-2">
+            {thumb}
             {badgeQuantity != null && (
               <QuantityBadge
                 quantidade={badgeQuantity}
@@ -163,6 +195,7 @@ export function ItemCard({
           </motion.div>
 
           <div className="flex-1 min-w-0 flex items-center gap-2">
+            {thumb}
             {badgeQuantity != null && (
               <QuantityBadge
                 quantidade={badgeQuantity}
@@ -250,6 +283,7 @@ export function ItemCard({
         </div>
 
         <div className="flex-1 min-w-0 flex items-center gap-2">
+          {thumb}
           {badgeQuantity != null && (
             <QuantityBadge
               quantidade={badgeQuantity}

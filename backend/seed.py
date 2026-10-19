@@ -1,4 +1,4 @@
-from .db import Base, SessionLocal, engine
+from .db import PHOTOS_DIR, Base, SessionLocal, engine
 from .models import Category, Item, Settings, User
 
 INITIAL_USERS = [
@@ -321,8 +321,18 @@ INITIAL_ITEMS = {
 }
 
 
+def _migrate() -> None:
+    # create_all não acrescenta coluna em tabela que já existe.
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(items)")}
+        if "foto_versao" not in cols:
+            conn.exec_driver_sql("ALTER TABLE items ADD COLUMN foto_versao INTEGER")
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    _migrate()
+    PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
 
     db = SessionLocal()
     try:

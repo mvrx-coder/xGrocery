@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Dict, Optional, Tuple
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Cookie, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from .db import get_db
@@ -34,7 +34,25 @@ def get_current_user(
 ) -> User:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Token ausente")
-    token = authorization[7:]
+    return _user_for_token(authorization[7:], db)
+
+
+def get_image_user(
+    authorization: Optional[str] = Header(default=None),
+    xgrocery_token: Optional[str] = Cookie(default=None),
+    db: Session = Depends(get_db),
+) -> User:
+    # <img> não manda header Authorization: o cliente espelha o token num
+    # cookie (ver api.ts). Cookie em vez de ?token= para o token não ir parar
+    # no access log do uvicorn nem nos logs da Cloudflare.
+    if authorization and authorization.startswith("Bearer "):
+        return _user_for_token(authorization[7:], db)
+    if not xgrocery_token:
+        raise HTTPException(401, "Token ausente")
+    return _user_for_token(xgrocery_token, db)
+
+
+def _user_for_token(token: str, db: Session) -> User:
     session = SESSIONS.get(token)
     if not session:
         raise HTTPException(401, "Token inválido")

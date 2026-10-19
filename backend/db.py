@@ -15,6 +15,12 @@ DB_PATH = Path(
     )
 )
 
+# Fotos dos itens: pasta ao lado do banco, pelo mesmo motivo (fora do git,
+# sobrevive a redeploy). Um arquivo por item: <id>.jpg e <id>_mini.jpg.
+PHOTOS_DIR = Path(
+    os.environ.get("XGROCERY_PHOTOS_DIR", str(DB_PATH.parent / "fotos"))
+)
+
 engine = create_engine(
     f"sqlite:///{DB_PATH}",
     connect_args={"check_same_thread": False},
