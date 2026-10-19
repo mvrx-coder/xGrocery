@@ -93,6 +93,17 @@ Senha única para todos: `Aa123456` (definida em `backend/auth.py`).
 - O frontend usa atualização otimista para toggle e exclusão. Se a chamada falhar, reverte.
 - CORS aceita rede local por padrão. Para liberar um hostname público direto no backend, defina `XGROCERY_PUBLIC_ORIGIN_REGEX`.
 
+## Backup
+
+Puxado pelo QNAP 1x/dia (22:00), no mesmo molde do backup B do xFinance. Scripts em `ops/backup/`:
+
+- `xgrocery_snapshot.py` → no .235 em `/home/marcusadm/xgrocery-backup/`. Gera `.tar.gz` com o banco (Online Backup API + `integrity_check`) e `fotos/`. Rodado só pela chave `nas-xgrocery-pull` (forced-command no `authorized_keys`).
+- `nas_pull_xgrocery.sh` + `install_cron.sh` → no QNAP em `/share/MVRX_NAS/.xgrocery_pull/` (log em `pull.log`). Pacotes em `MVRX_NAS/xGrocery_backup/xGrocery_AAMMDD_HHMM.tar.gz`, 30 últimos.
+- Mudou um script aqui? Copie de novo para o destino — o servidor e o NAS rodam a cópia, não o repo.
+- Restaurar: parar `xgrocery-backend`, extrair o pacote em `/opt/apps/xgrocery/x_db/`, subir o serviço.
+
+Ficha de infra: `E:\MVRX\infra` (`backups-e-alertas.md`).
+
 ## Roadmap
 
 - Conector Cloudflare Tunnel para acesso externo (a fazer; padrão xMeal).
